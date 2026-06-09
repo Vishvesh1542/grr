@@ -1,0 +1,32 @@
+.start-widget-button {
+    opacity: 0;
+    border-radius: 50%;
+    transition: 250ms all;
+    background-color: #ffffff;
+    padding: 0px;
+    margin: 0px;
+    min-width: 10px;
+    min-height: 10px;
+}
+
+.start-widget-button-visible {
+    opacity: 0.2;
+}
+
+.start-widget-button-active {
+    opacity: 1;
+}
+
+.start-widget-button-overview {
+    background-color: var(--accent-color);
+}
+
+.start-widget-container {
+    transform: scale(1);
+    transform-origin: center left;
+    transition: 250ms all;
+}
+
+.start-widget-container-hovered {
+    transform: scale(2);
+}
