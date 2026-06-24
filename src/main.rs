@@ -9,7 +9,9 @@ use std::rc::Rc;
 mod bar;
 mod services;
 mod widgets;
+use crate::services::dbus;
 use crate::services::notifications;
+use crate::widgets::launcher;
 use crate::widgets::notification::{NotificationInfo, NotificationServer};
 use crate::{
     bar::Bar,
@@ -20,6 +22,7 @@ pub enum BarEvent {
     WorkspaceChanged(i32, i32, String), // (active, total, monitor)
     OverviewToggled(bool),              // Current overview state
     Notification(NotificationInfo),
+    ToggleLauncher(),
 }
 
 fn update_monitors(app: &adw::Application, bars: &mut Vec<Bar>) {
@@ -75,9 +78,14 @@ fn main() {
         let (s, r): (Sender<BarEvent>, Receiver<BarEvent>) = async_channel::unbounded();
 
         let s2 = s.clone();
+        let s3 = s.clone();
         niri::start_listening(s);
         notifications::start_listening(s2);
+        dbus::start_listening(s3);
+
         let n_s = NotificationServer::init();
+
+        let launcher = launcher::Launcher::init();
 
         let bars: Rc<RefCell<Vec<Bar>>> = Rc::new(RefCell::new(Vec::new()));
         update_monitors(app, &mut bars.borrow_mut());
@@ -116,6 +124,9 @@ fn main() {
                     }
                     BarEvent::Notification(notification) => {
                         n_s.new_notif(notification);
+                    }
+                    BarEvent::ToggleLauncher() => {
+                        launcher.toggle();
                     }
                 }
             }
