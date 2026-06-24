@@ -9,8 +9,7 @@ use std::rc::Rc;
 mod bar;
 mod services;
 mod widgets;
-use crate::services::dbus;
-use crate::services::notifications;
+use crate::services::{dbus, notifications};
 use crate::widgets::launcher;
 use crate::widgets::notification::{NotificationInfo, NotificationServer};
 use crate::{
@@ -62,6 +61,31 @@ fn load_css() {
     );
 }
 
+// All the listeners / services are on another thread
+// Which should be better???
+fn start_listeners(sender: async_channel::Sender<BarEvent>) {
+    std::thread::spawn(move || {
+        let context = glib::MainContext::new();
+
+        context
+            .with_thread_default(|| {
+                let s = sender.clone();
+                glib::spawn_future_local(async move {
+                    notifications::start_listening(s).await.unwrap();
+                });
+
+                glib::spawn_future_local(
+                    async move { dbus::start_listening(sender).await.unwrap() },
+                );
+
+                let main_loop = glib::MainLoop::new(Some(&context), false);
+
+                main_loop.run();
+            })
+            .expect("Failed");
+    });
+}
+
 fn main() {
     unsafe {
         std::env::set_var("GSK_RENDERER", "cairo");
@@ -70,7 +94,7 @@ fn main() {
     config::init_config();
 
     let app = adw::Application::builder()
-        .application_id("com.vishvesh.grr")
+        .application_id("app.vishvesh.grr")
         .build();
 
     app.connect_startup(|_| load_css());
@@ -78,10 +102,10 @@ fn main() {
         let (s, r): (Sender<BarEvent>, Receiver<BarEvent>) = async_channel::unbounded();
 
         let s2 = s.clone();
-        let s3 = s.clone();
+        start_listeners(s2);
+
+        // TODO: Manage niri via zbus to remove the unnecessary crate
         niri::start_listening(s);
-        notifications::start_listening(s2);
-        dbus::start_listening(s3);
 
         let n_s = NotificationServer::init();
 

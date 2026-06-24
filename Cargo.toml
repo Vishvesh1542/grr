@@ -12,8 +12,7 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "1.1.2"
 niri-ipc = "26.4.0"
 async-channel = "2.5.0"
-dbus = "0.9.11"
-dbus-crossroads = "0.5.3"
+zbus = "5.16.0"
 
 [dependencies.adw]
 package = "libadwaita"

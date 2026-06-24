@@ -1,41 +1,31 @@
-use crate::BarEvent;
 use async_channel::Sender;
-use dbus::blocking::Connection;
-use dbus::channel::MatchingReceiver;
-use dbus_crossroads::{Crossroads, IfaceBuilder};
-use std::thread;
+use zbus::connection::Builder;
+use zbus::interface;
 
-pub fn start_listening(sender: Sender<BarEvent>) {
-    thread::spawn(|| {
-        let connection = Connection::new_session().expect("Error connecting to DBus");
-        connection
-            .request_name("com.grr.grr", false, true, false)
-            .expect("Error registering DBus");
+use crate::BarEvent;
 
-        let mut crossroads = Crossroads::new();
+struct DBusDaemon {
+    sender: Sender<BarEvent>,
+}
+#[interface(name = "com.vishvesh.grr")]
+impl DBusDaemon {
+    async fn toggle(&self) {
+        println!("Recieved DBus request: Toggle");
+        let _ = self.sender.send(BarEvent::ToggleLauncher()).await;
+    }
+}
 
-        let iface_token = crossroads.register("com.grr.grr", |b: &mut IfaceBuilder<()>| {
-            b.method("toggle", (), (), move |_, _, (): ()| {
-                println!("Recieved DBus event!!");
-                let _ = sender.send_blocking(BarEvent::ToggleLauncher());
-                Ok(())
-            });
-        });
+pub async fn start_listening(sender: Sender<BarEvent>) -> zbus::Result<()> {
+    let daemon = DBusDaemon { sender };
 
-        crossroads.insert("/com/grr/grr", &[iface_token], ());
+    let _connection = Builder::session()?
+        .name("com.vishvesh.grr")?
+        .serve_at("/com/vishvesh/grr", daemon)?
+        .build()
+        .await?;
 
-        connection.start_receive(
-            dbus::message::MatchRule::new_method_call(),
-            Box::new(move |msg, conn| {
-                crossroads.handle_message(msg, conn).unwrap();
-                true
-            }),
-        );
+    // Keep the connection alive
+    std::future::pending::<()>().await;
 
-        loop {
-            connection
-                .process(std::time::Duration::from_millis(200))
-                .expect("Error: DBus");
-        }
-    });
+    Ok(())
 }
