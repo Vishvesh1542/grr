@@ -1,0 +1,38 @@
+.launcher-outer-box {
+    background-color: transparent;
+}
+
+.launcher-window {
+    background-color: transparent;
+}
+
+.launcher-box {
+    background-color: var(--window-bg-color);
+    border-radius: var(--window-radius);
+    border: 1px solid var(--card-bg-color);
+    transition: all 100ms;
+    transform: scale(0.9);
+    opacity: 0;
+}
+
+.launcher-box-visible {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.launcher-search-box {
+    border-radius: 10px;
+    font-weight: 550;
+}
+
+.launcher-scrolled-window {
+    transition: all 100ms;
+}
+
+.launcher-item-label {
+    font-weight: 450;
+}
+
+.launcher-footer {
+    background-color: var(--card-bg-color);
+}

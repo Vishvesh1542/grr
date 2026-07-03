@@ -5,6 +5,7 @@ use gtk4::gdk::{Display, Monitor};
 use gtk4::glib;
 use std::cell::RefCell;
 use std::rc::Rc;
+use zbus::proxy;
 
 mod bar;
 mod services;
@@ -52,7 +53,9 @@ fn update_monitors(app: &adw::Application, bars: &mut Vec<Bar>) {
 
 fn load_css() {
     let provider = gtk4::CssProvider::new();
-    provider.load_from_data(include_str!("style/bar.css"));
+    provider.load_from_data(
+        &(include_str!("style/bar.css").to_string() + include_str!("style/launcher.css")),
+    );
 
     gtk4::style_context_add_provider_for_display(
         &Display::default().expect("Could not connect to a display."),
@@ -86,7 +89,40 @@ fn start_listeners(sender: async_channel::Sender<BarEvent>) {
     });
 }
 
+fn can_continue() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.contains(&"launcher-toggle".to_string()) {
+        let connection = zbus::blocking::Connection::session();
+
+        if let Some(con) = connection.ok() {
+            let result = con.call_method(
+                Some("com.vishvesh.grr"),
+                "/com/vishvesh/grr",
+                Some("com.vishvesh.grr"),
+                "Toggle",
+                &(),
+            );
+
+            if result.is_err() {
+                println!("Something went wrong. Is grr running?");
+            } else {
+                println!("Toggled the launcher.")
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    return true;
+}
+
 fn main() {
+    if !can_continue() {
+        return;
+    }
+
     unsafe {
         std::env::set_var("GSK_RENDERER", "cairo");
     }
