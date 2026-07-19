@@ -2,16 +2,21 @@ use async_channel::Sender;
 use zbus::connection::Builder;
 use zbus::interface;
 
-use crate::BarEvent;
+use crate::{BarEvent, background};
 
 struct DBusDaemon {
     sender: Sender<BarEvent>,
 }
 #[interface(name = "com.vishvesh.grr")]
 impl DBusDaemon {
-    async fn toggle(&self) {
-        println!("Recieved DBus request: Toggle");
-        let _ = self.sender.send(BarEvent::ToggleLauncher()).await;
+    async fn launcher_toggle(&self) {
+        println!("Recieved DBus request: LauncherToggle");
+        let _ = self.sender.send(BarEvent::LauncherToggle()).await;
+    }
+
+    async fn switch_background(&self) {
+        println!("Recieved DBus request: SwitchBackground");
+        let _ = self.sender.send(BarEvent::SwitchBackground()).await;
     }
 }
 

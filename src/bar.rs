@@ -2,7 +2,7 @@ use adw::prelude::AdwApplicationWindowExt;
 use adw::{Application, ApplicationWindow};
 use gtk4::{Box, Orientation, gdk};
 use gtk4::{CenterBox, prelude::*};
-use gtk4_layer_shell::{self, Edge, LayerShell};
+use gtk4_layer_shell::{self, Edge, Layer, LayerShell};
 
 use crate::services::config::{self};
 use crate::widgets::center_widget::CenterWidget;

@@ -2,14 +2,16 @@ use adw;
 use adw::prelude::*;
 use async_channel::{Receiver, Sender};
 use gtk4::gdk::{Display, Monitor};
-use gtk4::glib;
+use gtk4::{FileDialog, FileFilter};
+use gtk4::{gio, glib};
 use std::cell::RefCell;
 use std::rc::Rc;
-use zbus::proxy;
 
+mod background;
 mod bar;
 mod services;
 mod widgets;
+use crate::background::Background;
 use crate::services::{dbus, notifications};
 use crate::widgets::launcher;
 use crate::widgets::notification::{NotificationInfo, NotificationServer};
@@ -22,20 +24,25 @@ pub enum BarEvent {
     WorkspaceChanged(i32, i32, String), // (active, total, monitor)
     OverviewToggled(bool),              // Current overview state
     Notification(NotificationInfo),
-    ToggleLauncher(),
+    LauncherToggle(),
+    SwitchBackground(),
 }
 
-fn update_monitors(app: &adw::Application, bars: &mut Vec<Bar>) {
+fn update_monitors(app: &adw::Application, bars: &mut Vec<Bar>, backgrounds: &mut Vec<Background>) {
     if let Some(display) = Display::default() {
         let monitors = display.monitors();
         let mut active_monitors = Vec::new();
-        // Check if all monitors have a bar. ( Monitor was added )
+        // Check if all monitors have a bar & background. ( Monitor was added )
         for i in 0..monitors.n_items() {
             if let Some(monitor) = monitors.item(i).and_downcast::<Monitor>() {
                 active_monitors.push(monitor.clone());
                 if !bars.iter().any(|bar| bar.monitor == monitor) {
+                    // If bar wasn't there, then background won't be either.
                     let bar = Bar::init(app, &monitor);
                     bars.push(bar);
+
+                    let background = Background::init(app, &monitor);
+                    backgrounds.push(background)
                 }
             }
         }
@@ -45,6 +52,14 @@ fn update_monitors(app: &adw::Application, bars: &mut Vec<Bar>) {
             let is_alive = active_monitors.contains(&bar.monitor);
             if !is_alive {
                 bar.destroy();
+            }
+            is_alive
+        });
+        // Same for backgrounds
+        backgrounds.retain(|bg| {
+            let is_alive = active_monitors.contains(&bg.monitor);
+            if !is_alive {
+                bg.destroy();
             }
             is_alive
         });
@@ -100,7 +115,7 @@ fn can_continue() -> bool {
                 Some("com.vishvesh.grr"),
                 "/com/vishvesh/grr",
                 Some("com.vishvesh.grr"),
-                "Toggle",
+                "LauncherToggle",
                 &(),
             );
 
@@ -148,7 +163,8 @@ fn main() {
         let launcher = launcher::Launcher::init();
 
         let bars: Rc<RefCell<Vec<Bar>>> = Rc::new(RefCell::new(Vec::new()));
-        update_monitors(app, &mut bars.borrow_mut());
+        let backgrounds: Rc<RefCell<Vec<Background>>> = Rc::new(RefCell::new(Vec::new()));
+        update_monitors(app, &mut bars.borrow_mut(), &mut backgrounds.borrow_mut());
 
         // On monitors changed
         if let Some(d) = Display::default() {
@@ -156,8 +172,13 @@ fn main() {
 
             let app_clone = app.clone();
             let bars_clone = bars.clone();
+            let backgrounds_clone = backgrounds.clone();
             monitors.connect_items_changed(move |_, _, _, _| {
-                update_monitors(&app_clone, &mut bars_clone.borrow_mut());
+                update_monitors(
+                    &app_clone,
+                    &mut bars_clone.borrow_mut(),
+                    &mut backgrounds_clone.borrow_mut(),
+                );
             });
         }
 
@@ -185,8 +206,44 @@ fn main() {
                     BarEvent::Notification(notification) => {
                         n_s.new_notif(notification);
                     }
-                    BarEvent::ToggleLauncher() => {
+                    BarEvent::LauncherToggle() => {
                         launcher.toggle();
+                    }
+
+                    BarEvent::SwitchBackground() => {
+                        let file_filter = gtk4::FileFilter::new();
+                        file_filter.set_name(Some("Images"));
+                        file_filter.add_mime_type("image/*");
+
+                        let filter_list = gio::ListStore::new::<FileFilter>();
+                        filter_list.append(&file_filter);
+
+                        let file_dialog = FileDialog::builder()
+                            .title("Background")
+                            .modal(false)
+                            .filters(&filter_list)
+                            .build();
+
+                        let backgrounds = backgrounds.clone();
+
+                        file_dialog.open(
+                            None::<&gtk4::Window>,
+                            gio::Cancellable::NONE,
+                            move |result| match result {
+                                Ok(f) => {
+                                    println!("Initiating background change request.");
+
+                                    let b_borrow = backgrounds.borrow();
+
+                                    for bg in b_borrow.iter() {
+                                        bg.switch_background(&f)
+                                    }
+                                }
+                                Err(_) => {
+                                    println!("Something went wrong while reading file.")
+                                }
+                            },
+                        );
                     }
                 }
             }

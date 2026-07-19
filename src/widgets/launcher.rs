@@ -4,7 +4,6 @@ use crate::services::search_provider;
 use adw::gio::AppInfo;
 use adw::prelude::*;
 use gtk4::Button;
-use gtk4::GestureClick;
 use gtk4::Orientation;
 use gtk4::ScrolledWindow;
 use gtk4::SearchEntry;
