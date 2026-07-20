@@ -12,7 +12,7 @@ impl CenterWidget {
 
         fn get_current_time_label() -> String {
             let ts = time_format::now().unwrap();
-            return time_format::strftime_local(config::get_config().time_format.as_str(), ts)
+            return time_format::strftime_local(config::get_config().bar.time_format.as_str(), ts)
                 .unwrap();
         }
 

@@ -2,7 +2,7 @@ use async_channel::Sender;
 use zbus::connection::Builder;
 use zbus::interface;
 
-use crate::{BarEvent, background};
+use crate::BarEvent;
 
 struct DBusDaemon {
     sender: Sender<BarEvent>,

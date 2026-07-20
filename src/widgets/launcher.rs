@@ -1,18 +1,8 @@
-use std::time::Duration;
-
 use crate::services::search_provider;
-use adw::gio::AppInfo;
-use adw::prelude::*;
-use gtk4::Button;
-use gtk4::Orientation;
-use gtk4::ScrolledWindow;
-use gtk4::SearchEntry;
-use gtk4::Window;
-use gtk4::gdk::Key;
-use gtk4::glib;
-use gtk4::{Box, Label};
-use gtk4_layer_shell;
-use gtk4_layer_shell::{Edge, LayerShell};
+use adw::{gio::AppInfo, prelude::*};
+use gtk4::{Box, Button, Label, Orientation, ScrolledWindow, SearchEntry, Window, gdk::Key, glib};
+use gtk4_layer_shell::{self, Edge, LayerShell};
+use std::time::Duration;
 
 fn launch(app: &AppInfo) {
     let context = gtk4::gdk::Display::default().map(|d| d.app_launch_context());

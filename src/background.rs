@@ -1,10 +1,12 @@
-use adw::ApplicationWindow;
-use adw::gdk::Monitor;
-use adw::prelude::*;
-use adw::{Application, prelude::AdwApplicationWindowExt};
-use gtk4::gio::File;
-use gtk4::{ContentFit, Picture, gdk};
+use adw::{Application, ApplicationWindow, prelude::*};
+use gtk4::{
+    ContentFit, Picture,
+    gdk::{self, Monitor},
+    gio::File,
+};
 use gtk4_layer_shell::{self, Edge, Layer, LayerShell};
+
+use crate::services::config;
 
 pub struct Background {
     pub window: ApplicationWindow,
@@ -23,7 +25,7 @@ impl Background {
         window.set_layer(Layer::Background);
         window.set_monitor(Some(monitor));
 
-        let picture = Picture::for_filename("/home/vishvesh/Pictures/Wallpapers/wallpaper-2.png");
+        let picture = Picture::for_filename(config::get_config().background.path.as_str());
         picture.set_content_fit(ContentFit::Fill);
 
         window.set_content(Some(&picture));
@@ -43,5 +45,11 @@ impl Background {
 
     pub fn switch_background(&self, new_bg_file: &File) {
         self.picture.set_file(Some(new_bg_file));
+
+        if let Some(path) = new_bg_file.path() {
+            let string = path.to_str().unwrap_or("null").to_string();
+            config::get_config_mut().background.path = string;
+            config::save();
+        };
     }
 }

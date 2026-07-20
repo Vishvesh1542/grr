@@ -1,8 +1,6 @@
-use adw::prelude::AdwApplicationWindowExt;
-use adw::{Application, ApplicationWindow};
-use gtk4::{Box, Orientation, gdk};
-use gtk4::{CenterBox, prelude::*};
-use gtk4_layer_shell::{self, Edge, Layer, LayerShell};
+use adw::{Application, ApplicationWindow, prelude::*};
+use gtk4::{Box, CenterBox, Orientation, gdk};
+use gtk4_layer_shell::{self, Edge, LayerShell};
 
 use crate::services::config::{self};
 use crate::widgets::center_widget::CenterWidget;
@@ -18,7 +16,7 @@ impl Bar {
     pub fn init(app: &Application, monitor: &gdk::Monitor) -> Self {
         let window = ApplicationWindow::builder()
             .application(app)
-            .height_request(config::get_config().bar_height)
+            .height_request(config::get_config().bar.height)
             .build();
         window.init_layer_shell();
         window.auto_exclusive_zone_enable();

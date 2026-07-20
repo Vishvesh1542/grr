@@ -1,7 +1,5 @@
 use gtk4::{Box, Button, Orientation, prelude::*};
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use crate::services::{config, niri};
 
@@ -17,7 +15,7 @@ impl StartWidget {
 
         let buttons_container = Box::builder()
             .orientation(Orientation::Horizontal)
-            .margin_start(config::get_config().margin)
+            .margin_start(config::get_config().general.margin)
             .valign(gtk4::Align::Center)
             .css_classes(["start-widget-container"])
             .build();

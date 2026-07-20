@@ -1,7 +1,5 @@
-use adw::prelude::AdwWindowExt;
-use adw::{Window, glib};
-use gtk4::prelude::{BoxExt, GtkWindowExt};
-use gtk4::{Box, Label};
+use adw::{Window, prelude::*};
+use gtk4::{Box, Label, glib};
 use gtk4_layer_shell::{self, Edge, LayerShell};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -46,7 +44,10 @@ impl NotificationServer {
         window.init_layer_shell();
         window.set_anchor(Edge::Top, true);
 
-        let layout = Box::new(gtk4::Orientation::Vertical, config::get_config().spacing);
+        let layout = Box::new(
+            gtk4::Orientation::Vertical,
+            config::get_config().general.spacing,
+        );
 
         let title = Label::new(Some(&notif.app_name));
         layout.append(&title);

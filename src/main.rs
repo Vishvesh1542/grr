@@ -1,9 +1,7 @@
-use adw;
-use adw::prelude::*;
+use adw::{self, prelude::*};
 use async_channel::{Receiver, Sender};
 use gtk4::gdk::{Display, Monitor};
-use gtk4::{FileDialog, FileFilter};
-use gtk4::{gio, glib};
+use gtk4::{FileDialog, FileFilter, gio, glib};
 use std::cell::RefCell;
 use std::rc::Rc;
 
